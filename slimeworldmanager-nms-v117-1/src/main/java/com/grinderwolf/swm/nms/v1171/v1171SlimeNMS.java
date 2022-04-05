@@ -79,7 +79,7 @@ public class v1171SlimeNMS implements SlimeNMS {
             return null;
         }
 
-        System.out.println("INJECTING: " + defaultWorld + " " + defaultNetherWorld + " " + defaultEndWorld);
+        LOGGER.info("INJECTING: " + defaultWorld + " " + defaultNetherWorld + " " + defaultEndWorld);
 
 
         MinecraftServer server = MinecraftServer.getServer();
