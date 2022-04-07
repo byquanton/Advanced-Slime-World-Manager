@@ -11,13 +11,13 @@ dependencies {
     implementation(project(":slimeworldmanager-classmodifierapi"))
 
     implementation("com.flowpowered:flow-nbt:2.0.2")
-    implementation("com.github.luben:zstd-jni:1.4.9-5")
-    implementation("com.zaxxer:HikariCP:3.3.1")
-    implementation("org.mongodb:mongo-java-driver:3.11.0-rc0")
-    implementation("io.lettuce:lettuce-core:6.1.1.RELEASE")
-    implementation("org.spongepowered:configurate-yaml:3.7-SNAPSHOT")
+    implementation("com.github.luben:zstd-jni:1.5.2-2")
+    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("org.mongodb:mongo-java-driver:3.12.10")
+    implementation("io.lettuce:lettuce-core:6.1.8.RELEASE")
+    implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.bstats:bstats-bukkit:3.0.0")
-    implementation("commons-io:commons-io:2.8.0")
+    implementation("commons-io:commons-io:2.11.0")
     compileOnly("io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT")
 }
 

@@ -66,13 +66,10 @@ public class v1182SlimeNMS implements SlimeNMS {
     private CustomWorldServer defaultNetherWorld;
     private CustomWorldServer defaultEndWorld;
 
-    @Getter
-    private static Plugin plugin;
 
-    public v1182SlimeNMS(boolean isPaper, Plugin plugin) {
+    public v1182SlimeNMS(boolean isPaper) {
         try {
             isPaperMC = isPaper;
-            v1182SlimeNMS.plugin = plugin;
             CraftCLSMBridge.initialize(this);
         } catch (NoClassDefFoundError ex) {
             LOGGER.error("Failed to find ClassModifier classes. Are you sure you installed it correctly?", ex);
