@@ -15,9 +15,9 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("org.mongodb:mongo-java-driver:3.12.10")
     implementation("io.lettuce:lettuce-core:6.1.8.RELEASE")
-    implementation("org.spongepowered:configurate-yaml:3.7")
+    implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.bstats:bstats-bukkit:3.0.0")
-    implementation("commons-io:commons-io:20030203.000550")
+    implementation("commons-io:commons-io:2.11.0")
     compileOnly("io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT")
 }
 
