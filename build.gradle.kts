@@ -16,6 +16,9 @@ allprojects {
     apply(plugin = "java")
     apply(plugin = "io.freefair.lombok")
 
+    group = "com.grinderwolf"
+    version = "2.8.0-SNAPSHOT"
+
     repositories {
         mavenLocal()
         mavenCentral()
@@ -45,3 +48,15 @@ allprojects {
         }
     }
 }
+
+subprojects{
+    if(tasks.jar.get().archiveBaseName.get() == "slimeworldmanager-api"){
+        apply(plugin = "maven-publish")
+        publishing {
+            publications.create<MavenPublication>("mavenJava") {
+                from(components["java"])
+            }
+        }
+    }
+}
+
