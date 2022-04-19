@@ -12,6 +12,7 @@ import com.grinderwolf.swm.api.world.SlimeChunk;
 import com.grinderwolf.swm.api.world.SlimeChunkSection;
 import com.grinderwolf.swm.api.world.properties.SlimeProperties;
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap;
+import com.grinderwolf.swm.nms.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import lombok.Getter;
@@ -29,7 +30,7 @@ import net.minecraft.util.ProgressListener;
 import net.minecraft.util.Unit;
 import net.minecraft.world.Container;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
@@ -40,9 +41,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.*;
-import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+import net.minecraft.world.level.chunk.storage.*;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.entity.*;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.storage.ServerLevelData;
@@ -56,8 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -103,10 +104,6 @@ public class CustomWorldServer extends ServerLevel {
         }
 
         this.keepSpawnInMemory = false;
-        this.entityManager.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(world.getEntities()
-                        .stream()
-                        .map((tag) -> (net.minecraft.nbt.CompoundTag) Converter.convertTag(tag))
-                        .collect(Collectors.toList()), this));
     }
 
     @Override
@@ -335,6 +332,38 @@ public class CustomWorldServer extends ServerLevel {
         } else {
             slimeWorld.updateChunk(new NMSSlimeChunk(chunk));
         }
+    }
+
+    public CompletableFuture<ChunkEntities<Entity>> handleEntityLoad(EntityStorage storage, ChunkPos pos) {
+        List<CompoundTag> entities = slimeWorld.getEntities().get(NmsUtil.asLong(pos.x, pos.z));
+        if (entities == null) {
+            entities = new ArrayList<>();
+        }
+
+        return CompletableFuture.completedFuture(new ChunkEntities<>(pos, new ArrayList<>(
+                EntityType.loadEntitiesRecursive(entities
+                                .stream()
+                                .map((tag) -> (net.minecraft.nbt.CompoundTag) Converter.convertTag(tag))
+                                .collect(Collectors.toList()), this)
+                        .toList()
+        )));
+
+
+    }
+
+    public void handleEntityUnLoad(EntityStorage storage, ChunkEntities<Entity> entities) {
+        ChunkPos pos = entities.getPos();
+        List<CompoundTag> entitiesSerialized = new ArrayList<>();
+
+        entities.getEntities().forEach((entity) -> {
+            net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+            if (entity.save(tag)) {
+                entitiesSerialized.add((CompoundTag) Converter.convertTag("", tag));
+            }
+
+        });
+
+        slimeWorld.getEntities().put(NmsUtil.asLong(pos.x, pos.z), entitiesSerialized);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.grinderwolf.swm.api.exceptions.*;
 import com.grinderwolf.swm.api.loaders.*;
 import com.grinderwolf.swm.api.world.*;
 import com.grinderwolf.swm.api.world.properties.*;
+import com.grinderwolf.swm.nms.*;
 import it.unimi.dsi.fastutil.longs.*;
 
 import java.io.*;
@@ -22,13 +23,13 @@ public abstract class AbstractSlimeLoadedWorld implements SlimeLoadedWorld {
     protected final boolean readOnly;
     private final boolean lock;
 
-    protected final List<CompoundTag> entities;
+    protected final Long2ObjectOpenHashMap<List<CompoundTag>> entities;
 
     private final Object chunkAccessLock = new Object();
 
     protected AbstractSlimeLoadedWorld(byte version, SlimeLoader loader, String name,
                                        Long2ObjectOpenHashMap<SlimeChunk> chunks, CompoundTag extraData, SlimePropertyMap propertyMap,
-                                       boolean readOnly, boolean lock, List<CompoundTag> entities) {
+                                       boolean readOnly, boolean lock, Long2ObjectOpenHashMap<List<CompoundTag>> entities) {
         this.version = version;
         this.loader = loader;
         this.name = name;
@@ -81,7 +82,7 @@ public abstract class AbstractSlimeLoadedWorld implements SlimeLoadedWorld {
 
     public abstract SlimeLoadedWorld createSlimeWorld(String worldName, SlimeLoader loader, boolean lock);
 
-    public List<CompoundTag> getEntities() {
+    public Long2ObjectOpenHashMap<List<CompoundTag>> getEntities() {
         return entities;
     }
 
@@ -161,7 +162,7 @@ public abstract class AbstractSlimeLoadedWorld implements SlimeLoadedWorld {
     }
 
     public static long getIndex(int x, int z) {
-        return (((long) z) * Integer.MAX_VALUE + ((long) x));
+        return NmsUtil.asLong(x, z);
     }
 
 }

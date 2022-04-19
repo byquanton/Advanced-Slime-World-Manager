@@ -290,7 +290,7 @@ public class v1182SlimeNMS implements SlimeNMS {
                         GameRules.Value<?> gameRuleValue = rules.getRule(gameRuleKeys.get(gameRule));
                         String theValue = compound.getString(gameRule);
                         gameRuleValue.deserialize(theValue);
-                        gameRuleValue.onChanged(mcServer);
+                        gameRuleValue.onChanged(null);
                     }
                 });
             });
@@ -309,7 +309,7 @@ public class v1182SlimeNMS implements SlimeNMS {
     }
 
     @Override
-    public SlimeLoadedWorld createSlimeWorld(SlimeLoader loader, String worldName, Long2ObjectOpenHashMap<SlimeChunk> chunks, CompoundTag extraCompound, List<CompoundTag> mapList, byte worldVersion, SlimePropertyMap worldPropertyMap, boolean readOnly, boolean lock, List<CompoundTag> entities) {
+    public SlimeLoadedWorld createSlimeWorld(SlimeLoader loader, String worldName, Long2ObjectOpenHashMap<SlimeChunk> chunks, CompoundTag extraCompound, List<CompoundTag> mapList, byte worldVersion, SlimePropertyMap worldPropertyMap, boolean readOnly, boolean lock, Long2ObjectOpenHashMap<List<CompoundTag>> entities) {
         return new v1182SlimeWorld(this, worldVersion, loader, worldName, chunks, extraCompound, worldPropertyMap, readOnly, lock, entities);
     }
 }

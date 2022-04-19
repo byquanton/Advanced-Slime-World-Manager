@@ -1,68 +1,54 @@
 package com.grinderwolf.swm.nms.v1171;
 
-import com.flowpowered.nbt.CompoundMap;
 import com.flowpowered.nbt.CompoundTag;
 import com.flowpowered.nbt.LongArrayTag;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.grinderwolf.swm.api.exceptions.UnknownWorldException;
-import com.grinderwolf.swm.api.world.SlimeChunk;
-import com.grinderwolf.swm.api.world.SlimeChunkSection;
-import com.grinderwolf.swm.api.world.properties.SlimeProperties;
-import com.grinderwolf.swm.api.world.properties.SlimePropertyMap;
+import com.flowpowered.nbt.*;
+import com.google.common.collect.*;
+import com.google.common.util.concurrent.*;
+import com.grinderwolf.swm.api.exceptions.*;
+import com.grinderwolf.swm.api.world.*;
+import com.grinderwolf.swm.api.world.properties.*;
 import com.grinderwolf.swm.nms.*;
-import com.grinderwolf.swm.nms.world.*;
-import com.mojang.serialization.Codec;
-import lombok.Getter;
-import lombok.Setter;
-import net.minecraft.core.BlockPos;
+import com.mojang.serialization.*;
+import lombok.*;
 import net.minecraft.core.Registry;
+import net.minecraft.core.*;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
-import net.minecraft.util.ProgressListener;
-import net.minecraft.util.Unit;
-import net.minecraft.world.Container;
+import net.minecraft.resources.*;
+import net.minecraft.server.*;
+import net.minecraft.server.level.*;
+import net.minecraft.util.*;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.*;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkBiomeContainer;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ImposterProtoChunk;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.ProtoTickList;
-import net.minecraft.world.level.chunk.UpgradeData;
-import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.biome.*;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.state.*;
+import net.minecraft.world.level.chunk.*;
+import net.minecraft.world.level.chunk.storage.*;
+import net.minecraft.world.level.dimension.*;
+import net.minecraft.world.level.entity.*;
+import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.ServerLevelData;
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_17_R1.entity.CraftHumanEntity;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.world.WorldSaveEvent;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.level.material.*;
+import net.minecraft.world.level.storage.*;
+import org.bukkit.*;
+import org.bukkit.craftbukkit.v1_17_R1.entity.*;
+import org.bukkit.entity.*;
+import org.bukkit.event.inventory.*;
+import org.bukkit.event.world.*;
+import org.jetbrains.annotations.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
+import java.util.stream.*;
 
 public class CustomWorldServer extends ServerLevel {
 
@@ -119,10 +105,6 @@ public class CustomWorldServer extends ServerLevel {
             };
         }
 
-        this.entityManager.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(world.getEntities()
-                .stream()
-                .map((tag) -> (net.minecraft.nbt.CompoundTag) Converter.convertTag(tag))
-                .collect(Collectors.toList()), this));
     }
 
     public static CompletableFuture<Integer> relight(net.minecraft.world.level.Level world, Collection<? extends LevelChunk> chunks) {
@@ -310,18 +292,6 @@ public class CustomWorldServer extends ServerLevel {
                     }
                 }
             }
-
-            // Load entities
-            List<CompoundTag> entities = chunk.getEntities();
-            loadedEntities = 0;
-
-            if (entities != null) {
-                this.entityManager.addLegacyChunkEntities(EntityType.loadEntitiesRecursive(entities
-                                .stream()
-                                .map((tag) -> (net.minecraft.nbt.CompoundTag) Converter.convertTag(tag))
-                                .collect(Collectors.toList()),
-                        this));
-            }
         };
 
         LevelChunk nmsChunk = new LevelChunk(this, pos, biomeStorage,
@@ -362,6 +332,38 @@ public class CustomWorldServer extends ServerLevel {
         } else {
             slimeWorld.updateChunk(new NMSSlimeChunk(chunk));
         }
+    }
+
+    public CompletableFuture<ChunkEntities<Entity>> handleEntityLoad(EntityStorage storage, ChunkPos pos) {
+        List<CompoundTag> entities = slimeWorld.getEntities().get(NmsUtil.asLong(pos.x, pos.z));
+        if (entities == null) {
+            entities = new ArrayList<>();
+        }
+
+        return CompletableFuture.completedFuture(new ChunkEntities<>(pos, new ArrayList<>(
+                EntityType.loadEntitiesRecursive(entities
+                                .stream()
+                                .map((tag) -> (net.minecraft.nbt.CompoundTag) Converter.convertTag(tag))
+                                .collect(Collectors.toList()), this)
+                        .toList()
+        )));
+
+
+    }
+
+    public void handleEntityUnLoad(EntityStorage storage, ChunkEntities<Entity> entities) {
+        ChunkPos pos = entities.getPos();
+        List<CompoundTag> entitiesSerialized = new ArrayList<>();
+
+        entities.getEntities().forEach((entity) -> {
+            net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+            if (entity.save(tag)) {
+                entitiesSerialized.add((CompoundTag) Converter.convertTag("", tag));
+            }
+
+        });
+
+        slimeWorld.getEntities().put(NmsUtil.asLong(pos.x, pos.z), entitiesSerialized);
     }
 
     @Override

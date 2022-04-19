@@ -7,7 +7,6 @@ import com.grinderwolf.swm.api.world.properties.*;
 import com.grinderwolf.swm.nms.*;
 import com.grinderwolf.swm.nms.world.*;
 import it.unimi.dsi.fastutil.longs.*;
-import net.minecraft.world.entity.*;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_17_R1.scheduler.*;
 import org.bukkit.scheduler.*;
@@ -15,7 +14,6 @@ import org.bukkit.scheduler.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
 
 public class v1171SlimeWorld extends AbstractSlimeNMSWorld {
 
@@ -24,10 +22,9 @@ public class v1171SlimeWorld extends AbstractSlimeNMSWorld {
     private CustomWorldServer handle;
 
     public v1171SlimeWorld(SlimeNMS nms, byte version, SlimeLoader loader, String name, Long2ObjectOpenHashMap<SlimeChunk> chunks,
-                           CompoundTag extraData, SlimePropertyMap propertyMap, boolean readOnly, boolean lock, List<CompoundTag> entities) {
+                           CompoundTag extraData, SlimePropertyMap propertyMap, boolean readOnly, boolean lock, Long2ObjectOpenHashMap<List<CompoundTag>> entities) {
         super(version, loader, name, chunks, extraData, propertyMap, readOnly, lock, entities, nms);
     }
-
 
     public void setHandle(CustomWorldServer handle) {
         this.handle = handle;
@@ -47,12 +44,9 @@ public class v1171SlimeWorld extends AbstractSlimeNMSWorld {
         runnables.add(() -> {
             if (handle != null) {
                 SlimeLogger.debug("Saving entities");
-                for (Entity entity : this.handle.entityManager.getEntityGetter().getAll()) {
-                    SlimeLogger.debug("Saving: " + entity);
-                    net.minecraft.nbt.CompoundTag entityNbt = new net.minecraft.nbt.CompoundTag();
-                    if (entity.save(entityNbt)) {
-                        entities.add((CompoundTag) Converter.convertTag("", entityNbt));
-                    }
+                this.handle.entityManager.saveAll();
+                for (List<CompoundTag> value : this.entities.values()) {
+                    entities.addAll(value);
                 }
             }
         });

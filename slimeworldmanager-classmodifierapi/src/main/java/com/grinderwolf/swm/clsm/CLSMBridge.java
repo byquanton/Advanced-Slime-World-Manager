@@ -11,13 +11,41 @@ public interface CLSMBridge {
     }
 
     /**
-     * Called when a chunk is should be saved.
+     * Called when a chunk should be saved.
      *
      * @param world level
      * @param chunkAccess chunk
      * @return return true to run custom saving behavior, false to default to normal behavior
      */
     default boolean saveChunk(Object world, Object chunkAccess) {
+        return false;
+    }
+
+
+    /**
+     * Called when an entity chunk should be saved.
+     *
+     * @return return true to run custom saving behavior, false to default to normal behavior
+     */
+    default boolean storeEntities(Object storage, Object entityList) {
+        return false;
+    }
+
+    /**
+     * Called when an entity chunk should be populated
+     *
+     * @return return entity list to run custom, null to default to normal behavior
+     */
+    default Object loadEntities(Object storage, Object chunkCoords) {
+        return null;
+    }
+
+    /**
+     * Called when an entity chunk should be flushed
+     *
+     * @return return entity list to run custom, null to default to normal behavior
+     */
+    default boolean flushEntities(Object storage) {
         return false;
     }
 

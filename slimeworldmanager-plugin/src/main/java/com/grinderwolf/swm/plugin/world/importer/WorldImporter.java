@@ -74,7 +74,7 @@ public class WorldImporter {
         Long2ObjectOpenHashMap<SlimeChunk> chunks = new Long2ObjectOpenHashMap<>();
 
         for (File file : regionDir.listFiles((dir, name) -> name.endsWith(".mca"))) {
-            chunks.putAll(loadChunks(file, worldVersion).stream().collect(Collectors.toMap((chunk) -> ((long) chunk.getZ()) * Integer.MAX_VALUE + ((long) chunk.getX()), (chunk) -> chunk)));
+            chunks.putAll(loadChunks(file, worldVersion).stream().collect(Collectors.toMap((chunk) -> NmsUtil.asLong(chunk.getX(), chunk.getZ()), (chunk) -> chunk)));
         }
 
         if (chunks.isEmpty()) {

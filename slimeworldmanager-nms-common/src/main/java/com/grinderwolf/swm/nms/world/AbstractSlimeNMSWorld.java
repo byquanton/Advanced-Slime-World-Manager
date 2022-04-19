@@ -25,7 +25,7 @@ public abstract class AbstractSlimeNMSWorld extends AbstractSlimeLoadedWorld {
 
     protected AbstractSlimeNMSWorld(byte version, SlimeLoader loader, String name, Long2ObjectOpenHashMap<SlimeChunk> chunks,
                                     CompoundTag extraData, SlimePropertyMap propertyMap, boolean readOnly, boolean lock,
-                                    List<CompoundTag> entities,
+                                    Long2ObjectOpenHashMap<List<CompoundTag>> entities,
                                     SlimeNMS nms) {
         super(version, loader, name, chunks, extraData, propertyMap, readOnly, lock, entities);
         this.nms = nms;
@@ -38,13 +38,7 @@ public abstract class AbstractSlimeNMSWorld extends AbstractSlimeLoadedWorld {
             sortedChunks = new ArrayList<>(chunks.values());
         }
 
-        sortedChunks.sort(Comparator.comparingLong(chunk -> {
-            if (chunk != null) {
-                return (long) chunk.getZ() * Integer.MAX_VALUE + (long) chunk.getX();
-            } else {
-                return 0;
-            }
-        }));
+        sortedChunks.sort(Comparator.comparingLong(chunk -> NmsUtil.asLong(chunk.getX(), chunk.getZ())));
 
         sortedChunks.removeIf(Objects::isNull); // Remove empty chunks to save space
         if (propertyMap.getValue(SHOULD_LIMIT_SAVE)) {
@@ -192,7 +186,6 @@ public abstract class AbstractSlimeNMSWorld extends AbstractSlimeLoadedWorld {
     }
 
     public abstract CompletableFuture<ChunkSerialization> serializeChunks(List<SlimeChunk> chunks, byte worldVersion) throws IOException;
-
 
     protected static void writeBitSetAsBytes(DataOutputStream outStream, BitSet set, int fixedSize) throws IOException {
         byte[] array = set.toByteArray();

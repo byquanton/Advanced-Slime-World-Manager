@@ -25,7 +25,7 @@ public class v1182SlimeWorld extends AbstractSlimeNMSWorld {
     public v1182SlimeWorld(SlimeNMS nms, byte version, SlimeLoader loader, String name,
                            Long2ObjectOpenHashMap<SlimeChunk> chunks, CompoundTag extraData,
                            SlimePropertyMap propertyMap, boolean readOnly, boolean lock,
-                           List<CompoundTag> savedEntities) {
+                           Long2ObjectOpenHashMap<List<CompoundTag>> savedEntities) {
         super(version, loader, name, chunks, extraData, propertyMap, readOnly, lock, savedEntities, nms);
     }
 
@@ -49,14 +49,13 @@ public class v1182SlimeWorld extends AbstractSlimeNMSWorld {
 
         // Save entities
         runnables.add(() -> {
-           if (handle != null) {
-               for (Entity entity : getLoadedEntities()) {
-                   net.minecraft.nbt.CompoundTag entityNbt = new net.minecraft.nbt.CompoundTag();
-                   if (entity.save(entityNbt)) {
-                       entities.add((CompoundTag) Converter.convertTag("", entityNbt));
-                   }
-               }
-           }
+            if (handle != null) {
+                SlimeLogger.debug("Saving entities");
+                this.handle.entityManager.saveAll();
+                for (List<CompoundTag> value : this.entities.values()) {
+                    entities.addAll(value);
+                }
+            }
         });
 
         for (SlimeChunk chunk : chunks) {

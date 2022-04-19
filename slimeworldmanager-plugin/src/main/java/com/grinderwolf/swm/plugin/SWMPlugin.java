@@ -23,6 +23,7 @@ import com.grinderwolf.swm.plugin.log.Logging;
 import com.grinderwolf.swm.plugin.upgrade.WorldUpgrader;
 import com.grinderwolf.swm.plugin.world.WorldUnlocker;
 import com.grinderwolf.swm.plugin.world.importer.WorldImporter;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
@@ -309,7 +310,7 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin, Listener {
 
         Logging.info("Creating empty world " + worldName + ".");
         long start = System.currentTimeMillis();
-        SlimeLoadedWorld world = SWMPlugin.getInstance().getNms().createSlimeWorld(loader, worldName, new Long2ObjectOpenHashMap<>(), new CompoundTag("", new CompoundMap()), new ArrayList<>(), nms.getWorldVersion(), propertyMap, readOnly);
+        SlimeLoadedWorld world = SWMPlugin.getInstance().getNms().createSlimeWorld(loader, worldName, new Long2ObjectOpenHashMap<>(), new CompoundTag("", new CompoundMap()), new ArrayList<>(), nms.getWorldVersion(), propertyMap, readOnly, !readOnly, new Long2ObjectOpenHashMap<>());
         loader.saveWorld(worldName, world.serialize().join(), !readOnly);
 
         Logging.info("World " + worldName + " created in " + (System.currentTimeMillis() - start) + "ms.");

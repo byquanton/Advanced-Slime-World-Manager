@@ -128,24 +128,30 @@ public class v1_9SlimeWorldFormat implements SlimeWorldReader {
             // Entity deserialization
             CompoundTag entitiesCompound = readCompoundTag(entities);
 
-            List<CompoundTag> entitiesList = Collections.emptyList();
+            Long2ObjectOpenHashMap<List<CompoundTag>> entityStorage = new Long2ObjectOpenHashMap<>();
             if (entitiesCompound != null) {
-                entitiesList = ((ListTag<CompoundTag>) entitiesCompound.getValue().get("entities")).getValue();
+                List<CompoundTag> serializedEntities = ((ListTag<CompoundTag>) entitiesCompound.getValue().get("entities")).getValue();
 
-                if (worldVersion <= 0x07) {
-                    for (CompoundTag entityCompound : entitiesList) {
-                        ListTag<DoubleTag> listTag = (ListTag<DoubleTag>) entityCompound.getAsListTag("Pos").get();
+                for (CompoundTag entityCompound : serializedEntities) {
+                    ListTag<DoubleTag> listTag = (ListTag<DoubleTag>) entityCompound.getAsListTag("Pos").get();
 
-                        int chunkX = floor(listTag.getValue().get(0).getValue()) >> 4;
-                        int chunkZ = floor(listTag.getValue().get(2).getValue()) >> 4;
-                        long chunkKey = ((long) chunkZ) * Integer.MAX_VALUE + ((long) chunkX);
-                        SlimeChunk chunk = chunks.get(chunkKey);
+                    int chunkX = floor(listTag.getValue().get(0).getValue()) >> 4;
+                    int chunkZ = floor(listTag.getValue().get(2).getValue()) >> 4;
+                    long chunkKey = NmsUtil.asLong(chunkX, chunkZ);
+                    SlimeChunk chunk = chunks.get(chunkKey);
 
-                        if (chunk == null) {
-                            throw new CorruptedWorldException(worldName);
-                        }
+                    if (chunk == null) {
+                        throw new CorruptedWorldException(worldName);
+                    }
 
-                        chunk.getEntities().add(entityCompound);
+                    chunk.getEntities().add(entityCompound);
+
+                    if (entityStorage.containsKey(chunkKey)) {
+                        entityStorage.get(chunkKey).add(entityCompound);
+                    } else {
+                        List<CompoundTag> entityStorageList = new ArrayList<>();
+                        entityStorageList.add(entityCompound);
+                        entityStorage.put(chunkKey, entityStorageList);
                     }
                 }
             }
@@ -158,7 +164,7 @@ public class v1_9SlimeWorldFormat implements SlimeWorldReader {
                 for (CompoundTag tileEntityCompound : tileEntitiesList.getValue()) {
                     int chunkX = ((IntTag) tileEntityCompound.getValue().get("x")).getValue() >> 4;
                     int chunkZ = ((IntTag) tileEntityCompound.getValue().get("z")).getValue() >> 4;
-                    long chunkKey = ((long) chunkZ) * Integer.MAX_VALUE + ((long) chunkX);
+                    long chunkKey = NmsUtil.asLong(chunkX, chunkZ);
                     SlimeChunk chunk = chunks.get(chunkKey);
 
                     if (chunk == null) {
@@ -186,19 +192,6 @@ public class v1_9SlimeWorldFormat implements SlimeWorldReader {
                 mapList = new ArrayList<>();
             }
 
-            // v1_13 world format detection for old versions
-            if (worldVersion == 0) {
-                mainLoop:
-                for (SlimeChunk chunk : chunks.values()) {
-                    for (SlimeChunkSection section : chunk.getSections()) {
-                        if (section != null) {
-                            worldVersion = (byte) (section.getBlocks() == null ? 0x04 : 0x01);
-
-                            break mainLoop;
-                        }
-                    }
-                }
-            }
 
             // World properties
             SlimePropertyMap worldPropertyMap = propertyMap;
@@ -213,7 +206,7 @@ public class v1_9SlimeWorldFormat implements SlimeWorldReader {
                 worldPropertyMap = new SlimePropertyMap();
             }
 
-            return SWMPlugin.getInstance().getNms().createSlimeWorld(loader, worldName, chunks, extraCompound, mapList, worldVersion, worldPropertyMap, readOnly, !readOnly, entitiesList);
+            return SWMPlugin.getInstance().getNms().createSlimeWorld(loader, worldName, chunks, extraCompound, mapList, worldVersion, worldPropertyMap, readOnly, !readOnly, entityStorage);
         } catch (EOFException ex) {
             throw new CorruptedWorldException(worldName, ex);
         }
@@ -283,7 +276,10 @@ public class v1_9SlimeWorldFormat implements SlimeWorldReader {
                     // Chunk Sections
                     ChunkSectionData data = worldVersion < 0x08 ? readChunkSections(dataStream, worldVersion, version) : readChunkSectionsNew(dataStream, worldVersion, version);
 
-                    chunkMap.put(((long) minZ + z) * Integer.MAX_VALUE + ((long) minX + x), new CraftSlimeChunk(worldName, minX + x, minZ + z,
+                    int chunkX = minX + x;
+                    int chunkZ = minZ + z;
+
+                    chunkMap.put(NmsUtil.asLong(chunkX, chunkZ), new CraftSlimeChunk(worldName, chunkX, chunkZ,
                             data.sections, heightMaps, biomes, new ArrayList<>(), new ArrayList<>(), data.minSectionY, data.maxSectionY));
                 }
             }

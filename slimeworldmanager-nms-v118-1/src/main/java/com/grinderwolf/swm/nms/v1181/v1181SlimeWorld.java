@@ -1,14 +1,12 @@
 package com.grinderwolf.swm.nms.v1181;
 
 import com.flowpowered.nbt.*;
-import com.grinderwolf.swm.api.exceptions.*;
 import com.grinderwolf.swm.api.loaders.*;
 import com.grinderwolf.swm.api.world.*;
 import com.grinderwolf.swm.api.world.properties.*;
 import com.grinderwolf.swm.nms.*;
 import com.grinderwolf.swm.nms.world.*;
 import it.unimi.dsi.fastutil.longs.*;
-import net.minecraft.world.entity.*;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_18_R1.scheduler.*;
 import org.bukkit.scheduler.*;
@@ -26,7 +24,7 @@ public class v1181SlimeWorld extends AbstractSlimeNMSWorld {
     public v1181SlimeWorld(SlimeNMS nms, byte version, SlimeLoader loader, String name,
                            Long2ObjectOpenHashMap<SlimeChunk> chunks, CompoundTag extraData,
                            SlimePropertyMap propertyMap, boolean readOnly, boolean lock,
-                           List<CompoundTag> savedEntities) {
+                           Long2ObjectOpenHashMap<List<CompoundTag>> savedEntities) {
         super(version, loader, name, chunks, extraData, propertyMap, readOnly, lock, savedEntities, nms);
     }
 
@@ -52,11 +50,10 @@ public class v1181SlimeWorld extends AbstractSlimeNMSWorld {
         // Save entities
         runnables.add(() -> {
             if (handle != null) {
-                for (Entity entity : handle.entityManager.getEntityGetter().getAll()) {
-                    net.minecraft.nbt.CompoundTag entityNbt = new net.minecraft.nbt.CompoundTag();
-                    if (entity.save(entityNbt)) {
-                        entities.add((CompoundTag) Converter.convertTag("", entityNbt));
-                    }
+                SlimeLogger.debug("Saving entities");
+                this.handle.entityManager.saveAll();
+                for (List<CompoundTag> value : this.entities.values()) {
+                    entities.addAll(value);
                 }
             }
         });

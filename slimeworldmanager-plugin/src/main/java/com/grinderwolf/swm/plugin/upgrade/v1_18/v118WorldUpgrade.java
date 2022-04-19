@@ -148,6 +148,61 @@ public class v118WorldUpgrade implements Upgrade {
     @Override
     public void upgrade(SlimeLoadedWorld world) {
         for (SlimeChunk chunk : new ArrayList<>(world.getChunks().values())) {
+
+            // SpawnerSpawnDataFix
+            for (CompoundTag tileEntity : chunk.getTileEntities()) {
+                CompoundMap value = tileEntity.getValue();
+                Optional<String> id = tileEntity.getStringValue("id");
+                if (id.equals(Optional.of("minecraft:mob_spawner"))) {
+                    Optional<ListTag<?>> spawnPotentials = tileEntity.getAsListTag("SpawnPotentials");
+                    Optional<CompoundTag> spawnData = tileEntity.getAsCompoundTag("SpawnData");
+                    if (spawnPotentials.isPresent()) {
+                        ListTag<CompoundTag> spawnPotentialsList = (ListTag<CompoundTag>) spawnPotentials.get();
+                        List<CompoundTag> spawnPotentialsListValue = spawnPotentialsList.getValue();
+                        for (CompoundTag spawnPotentialsTag : spawnPotentialsListValue) {
+                            CompoundMap spawnPotentialsValue = spawnPotentialsTag.getValue();
+                            Optional<Integer> weight = spawnPotentialsTag.getIntValue("Weight");
+                            if (weight.isPresent()) {
+                                int weightVal = weight.get();
+                                spawnPotentialsValue.remove("Weight");
+                                spawnPotentialsValue.put("weight", new IntTag("weight", weightVal));
+                            }
+                            Optional<CompoundTag> entity = spawnPotentialsTag.getAsCompoundTag("Entity");
+                            if (entity.isPresent()) {
+                                CompoundTag entityTag = entity.get();
+                                spawnPotentialsValue.remove("Entity");
+                                entityTag.getValue();
+                                CompoundMap dataMap = new CompoundMap();
+                                dataMap.put(new CompoundTag("entity", entityTag.getValue()));
+                                spawnPotentialsValue.put("data", new CompoundTag("data", dataMap));
+                            }
+                        }
+                        value.put("SpawnPotentials", spawnPotentialsList);
+                        if (!spawnPotentialsListValue.isEmpty()) {
+                            CompoundTag compoundTag = spawnPotentialsListValue.get(0);
+                            CompoundTag entityTag = compoundTag.getAsCompoundTag("data").
+                                    get().getAsCompoundTag("entity").get();
+                            CompoundMap spawnDataMap = new CompoundMap();
+                            spawnDataMap.put(entityTag.clone());
+                            value.put("SpawnData", new CompoundTag("SpawnData", spawnDataMap));
+                        }
+                    } else if (spawnData.isPresent()) {
+                        CompoundTag spawnDataTag = spawnData.get();
+                        CompoundMap spawnDataValue = spawnDataTag.getValue();
+                        Optional<CompoundTag> entityTag = spawnDataTag.getAsCompoundTag("entity");
+                        Optional<StringTag> idTag = spawnDataTag.getAsStringTag("id");
+                        if (entityTag.isEmpty() && idTag.isPresent()) {
+                            StringTag entityTypeTag = idTag.get();
+                            spawnDataValue.remove("id");
+                            CompoundMap entityMap = new CompoundMap();
+                            entityMap.put(entityTypeTag);
+                            spawnDataValue.put("entity", new CompoundTag("entity", entityMap));
+                            value.put("SpawnData", spawnDataTag);
+                        }
+                    }
+                }
+            }
+
             CompoundTag[] tags = createBiomeSections(chunk.getBiomes(), false, 0);
 
             SlimeChunkSection[] sections = chunk.getSections();
